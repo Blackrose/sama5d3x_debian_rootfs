@@ -4,13 +4,17 @@
 #Target directory for the rootfs chroot image
 TARGET_ROOTFS_DIR=$1
 
+echo "Create some device node under /dev directory"
 mkdir $TARGET_ROOTFS_DIR/dev/pts
 mknod $TARGET_ROOTFS_DIR/dev/random c 1 8
 mknod $TARGET_ROOTFS_DIR/dev/urandom c 1 9
 mknod $TARGET_ROOTFS_DIR/dev/ptmx c 5 2
 mknod $TARGET_ROOTFS_DIR/dev/null c 1 3
 
+echo "Copy qume-arm-static to target rootfs directory"
 cp /usr/bin/qemu-arm-static $TARGET_ROOTFS_DIR/usr/bin
+
+echo "Configure all packages"
 LC_ALL=C LANGUAGE=C LANG=C chroot $TARGET_ROOTFS_DIR dpkg --configure -a
 
 #Directories used to mount some microSD partitions 
@@ -34,7 +38,11 @@ echo nameserver 114.114.114.114 > $filename
 filename=$TARGET_ROOTFS_DIR/etc/network/interfaces
 echo Updating $filename
 echo allow-hotplug eth0 eth1 >> $filename
-echo iface eth0 inet dhcp >> $filename
+#echo iface eth0 inet dhcp >> $filename
+echo iface eth0 inet static >> $filename
+echo "\taddress 192.168.1.190" >> $filename
+echo "\tnetmask 255.255.255.0" >> $filename
+echo "\tgateway 192.168.1.1" >> $filename
 #echo hwaddress ether 00:04:25:12:34:56 >> $filename
 #echo iface eth1 inet dhcp >> $filename
 #echo hwaddress ether 00:04:25:23:45:67 >> $filename
@@ -52,6 +60,9 @@ echo Creating $filename
 #echo /dev/mmcblk0p3 /media/data ext4 noatime 0 1 >> $filename
 echo proc /proc proc defaults 0 0 >> $filename
 
+echo Change hostname
+echo "myd-sama5d3x" > $TARGET_ROOTFS_DIR/etc/hostname
+
 #Add Debian security repository
 filename=$TARGET_ROOTFS_DIR/etc/apt/sources.list
 echo Creating $filename
@@ -60,4 +71,4 @@ echo "deb http://security.debian.org/ jessie/updates main"  >> $filename
 #Add the standard Debian non-free repositories useful to load
 #closed source firmware (i.e. WiFi dongle firmware)
 echo "deb http://debian.ustc.edu.cn/debian/ jessie main contrib non-free" >> $filename
-
+chroot $TARGET_ROOTFS_DIR passwd
