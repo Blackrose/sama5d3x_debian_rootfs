@@ -4,6 +4,8 @@
 #Target directory for the rootfs chroot image
 TARGET_ROOTFS_DIR=$1
 
+#multistrap -f $1
+
 echo "Create some device node under /dev directory"
 mkdir $TARGET_ROOTFS_DIR/dev/pts
 mknod $TARGET_ROOTFS_DIR/dev/random c 1 8
